@@ -90,8 +90,6 @@ export default function StationMonitoring() {
         if (history && history.length > 0) {
           const latest = history[0];
           setCurrentData(latest);
-          if (latest.relay1) setRelay1(latest.relay1 === "ON");
-          if (latest.relay2) setRelay2(latest.relay2 === "ON");
 
           // Build chart data (take up to 20, reverse for chronological order)
           const chartData = history.slice(0, 20).reverse().map((d: any) => ({
@@ -113,10 +111,6 @@ export default function StationMonitoring() {
         if (message.type === "new_data" && message.data.station_id === parseInt(stationId)) {
           const newData = message.data;
           setCurrentData(newData);
-
-          // Update relay state from logger report
-          if (newData.relay1) setRelay1(newData.relay1 === "ON");
-          if (newData.relay2) setRelay2(newData.relay2 === "ON");
 
           // Append to history for chart (keep last 20)
           setDataHistory(prev => {
