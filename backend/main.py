@@ -192,12 +192,30 @@ async def toggle_relay(station_id: int, relay_num: int, state: str, db: Session 
         raise HTTPException(status_code=400, detail="Relay address not configured")
         
     try:
-        # Example payload based on typical relay API. Need to confirm with user.
-        payload = {f"relay{relay_num}": state}
+        # Get latest sensor data to know the current state of the OTHER relay
+        latest = db.query(models.SensorData).filter(models.SensorData.station_id == station_id).order_by(models.SensorData.timestamp.desc()).first()
         
+        r1_val = 1 if (latest and latest.relay1 == "ON") else 0
+        r2_val = 1 if (latest and latest.relay2 == "ON") else 0
+        
+        if relay_num == 1:
+            r1_val = 1 if state == "ON" else 0
+        elif relay_num == 2:
+            r2_val = 1 if state == "ON" else 0
+            
+        payload = {
+            "relay1": r1_val,
+            "relay2": r2_val
+        }
+        
+        # Ensure the address starts with http://
+        address = station.relay_address
+        if not address.startswith("http://") and not address.startswith("https://"):
+            address = "http://" + address
+            
         # Send HTTP request to the logger address
         async with httpx.AsyncClient() as client:
-            response = await client.post(station.relay_address, json=payload, timeout=10.0)
+            response = await client.post(address, json=payload, timeout=10.0)
             
         if response.status_code >= 400:
             return {"status": "error", "message": f"Logger returned status {response.status_code}"}

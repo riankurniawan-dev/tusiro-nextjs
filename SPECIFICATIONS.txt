@@ -1,0 +1,66 @@
+=========================================================
+SMART TUSIRO APPS - SYSTEM SPECIFICATION & REQUIREMENTS
+=========================================================
+
+1. DESKRIPSI APLIKASI
+---------------------------------------------------------
+Smart Tusiro Apps adalah platform pemantauan (monitoring) IoT terpadu secara real-time. Aplikasi ini berfungsi untuk mengumpulkan, menampilkan, dan mengelola data logger/sensor seperti suhu, kelembaban, kelembaban tanah (moisture), tegangan, arus, serta kontrol status relay dari berbagai stasiun (station) pemantauan yang tersebar secara geografis.
+
+2. ARSITEKTUR SISTEM & TEKNOLOGI
+---------------------------------------------------------
+- Frontend (Client-Side)  : Next.js 14+ (React), Tailwind CSS, Lucide Icons, Leaflet (Map), SweetAlert2.
+- Backend (Server-Side)   : Python 3 dengan FastAPI (Uvicorn), WebSockets.
+- Database                : MySQL (diakses via SQLAlchemy ORM & PyMySQL).
+- Integrasi IoT / M2M     : Menerima JSON payload via HTTP POST endpoint, kemudian mem-broadcast data ke Dashboard secara real-time menggunakan WebSockets.
+- Keamanan (Security)     : 
+   - Autentikasi berbasis Login dan Token-based (local storage).
+   - Role-Based Access Control (RBAC): Admin (Full CRUD) dan Viewer (Read-only).
+   - Enkripsi Hash sederhana (SHA256) pada password database (dapat ditingkatkan).
+
+3. FITUR UTAMA (MAIN FEATURES)
+---------------------------------------------------------
+1. Real-Time Dashboard (WebSockets)
+   - Visualisasi gauge dan chart dinamis (Suhu, Kelembaban, Tegangan, Arus, Status Relay).
+   - Update otomatis setiap ada data baru dari data logger (tanpa perlu reload halaman).
+2. Pemetaan Geografis (Interactive Maps)
+   - Menampilkan lokasi seluruh Station menggunakan Leaflet/OpenStreetMap.
+   - Indikator warna dinamis: Hijau (Active/Normal), Kuning/Merah (Alert), Abu-abu (Inactive/Offline > 30 menit).
+3. Dynamic Thresholds & Alerts
+   - Konfigurasi ambang batas (thresholds) secara spesifik untuk tiap sensor di setiap station.
+   - Peringatan instan pada peta (Maps) saat parameter (seperti tegangan drop atau tanah mengering) melampaui batas.
+4. Master Data Management (CRUD)
+   - Manajemen perangkat Stasiun (ID, Nama, Latitude, Longitude, API Key).
+5. User Management & Roles
+   - Penambahan/Penghapusan User, perubahan Password.
+   - 2 tipe Role (Admin & Viewer) dengan kapabilitas akses yang dibatasi ketat di sisi UI.
+6. Notification Settings
+   - Halaman persiapan konfigurasi SMTP (Email) dan Bot Telegram untuk push notification di masa depan.
+7. Data Logging & History
+   - Seluruh payload terekam di tabel MySQL untuk integrasi reports di masa mendatang.
+
+4. MINIMUM SYSTEM REQUIREMENTS (SERVER CLOUD/ON-PREM)
+---------------------------------------------------------
+A. Spesifikasi Hardware (Rekomendasi untuk skala kecil-menengah):
+   - CPU  : 2 Core (Min 1 Core VPS)
+   - RAM  : 2 GB (Rekomendasi 4 GB untuk menampung node.js + apache + mysql)
+   - Disk : 20 GB SSD
+   - OS   : Ubuntu 22.04 LTS / Debian 11+ / Sistem Linux modern.
+
+B. Software Requirements:
+   - Node.js        : Versi 18 LTS atau 20 LTS (direkomendasikan v20).
+   - Python         : Versi 3.8+ (direkomendasikan 3.10+).
+   - Database       : MySQL Server 8.0+ atau MariaDB setara.
+   - Web Server     : Apache2 (dengan modul proxy_http dan proxy_wstunnel) atau Nginx.
+   - Process Mgr.   : PM2 (untuk menjaga service Next.js dan FastAPI tetap hidup).
+
+5. STRUKTUR DATABASE (MySQL / SQLAlchemy)
+---------------------------------------------------------
+1. users (id, username, password_hash, role)
+2. stations (id, name, latitude, longitude, api_key, relay_address)
+3. sensor_data (id, station_id, device_id, timestamp, moisture, temperature, humidity, voltage, current, mode, relay1, relay2)
+4. thresholds (id, station_id, sensor, operator, value1, value2)
+5. notification_settings (id, smtp_host, smtp_port, smtp_user, smtp_pass, telegram_bot_token, telegram_chat_id)
+
+=========================================================
+Dibuat pada: Juli 2026
+=========================================================

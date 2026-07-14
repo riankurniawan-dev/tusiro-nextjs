@@ -137,7 +137,7 @@ export default function StationMonitoring() {
     return () => ws.close();
   }, [stationId]);
 
-  const toggleRelay = async (relayNum: parseInt, state: boolean) => {
+  const toggleRelay = async (relayNum: number, state: boolean) => {
     if (relayNum === 1) setRelay1(state);
     if (relayNum === 2) setRelay2(state);
     
