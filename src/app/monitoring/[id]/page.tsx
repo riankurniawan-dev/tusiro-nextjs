@@ -65,11 +65,11 @@ const Gauge = ({ value, max, label, color, unit }: { value: number | null, max: 
 export default function StationMonitoring() {
   const params = useParams();
   const stationId = params.id as string;
-  
+
   const [station, setStation] = useState<any>(null);
   const [dataHistory, setDataHistory] = useState<any[]>([]);
   const [currentData, setCurrentData] = useState<any>(null);
-  
+
   // Relay states
   const [relay1, setRelay1] = useState(false);
   const [relay2, setRelay2] = useState(false);
@@ -92,7 +92,7 @@ export default function StationMonitoring() {
           setCurrentData(latest);
           if (latest.relay1) setRelay1(latest.relay1 === "ON");
           if (latest.relay2) setRelay2(latest.relay2 === "ON");
-          
+
           // Build chart data (take up to 20, reverse for chronological order)
           const chartData = history.slice(0, 20).reverse().map((d: any) => ({
             time: new Date(d.timestamp).toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
@@ -106,18 +106,18 @@ export default function StationMonitoring() {
 
     // WebSocket connection
     const ws = new WebSocket(process.env.NEXT_PUBLIC_WS_URL || "ws://localhost:8000/ws");
-    
+
     ws.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data);
         if (message.type === "new_data" && message.data.station_id === parseInt(stationId)) {
           const newData = message.data;
           setCurrentData(newData);
-          
+
           // Update relay state from logger report
           if (newData.relay1) setRelay1(newData.relay1 === "ON");
           if (newData.relay2) setRelay2(newData.relay2 === "ON");
-          
+
           // Append to history for chart (keep last 20)
           setDataHistory(prev => {
             const newHistory = [...prev, {
@@ -138,11 +138,15 @@ export default function StationMonitoring() {
   }, [stationId]);
 
   const toggleRelay = async (relayNum: number, state: boolean) => {
+    // Determine the new state for BOTH relays based on current UI state
+    const newRelay1 = relayNum === 1 ? state : relay1;
+    const newRelay2 = relayNum === 2 ? state : relay2;
+
     if (relayNum === 1) setRelay1(state);
     if (relayNum === 2) setRelay2(state);
-    
+
     try {
-      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/relay?station_id=${stationId}&relay_num=${relayNum}&state=${state ? "ON" : "OFF"}`);
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/relay?station_id=${stationId}&relay1=${newRelay1 ? 1 : 0}&relay2=${newRelay2 ? 1 : 0}`);
       MySwal.fire({
         title: 'Success!',
         text: `Relay ${relayNum} turned ${state ? "ON" : "OFF"}`,
@@ -182,7 +186,7 @@ export default function StationMonitoring() {
             )}
           </div>
         </div>
-        
+
         <div className="flex items-center gap-6 bg-white dark:bg-slate-800 px-6 py-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
           <div className="flex items-center space-x-3">
             <Switch id="relay1" checked={relay1} onCheckedChange={(c) => toggleRelay(1, c)} />
@@ -242,17 +246,17 @@ export default function StationMonitoring() {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={dataHistory}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-                <XAxis dataKey="time" tick={{fontSize: 12}} stroke="#94a3b8" />
-                <YAxis yAxisId="left" tick={{fontSize: 12}} stroke="#94a3b8" />
-                <YAxis yAxisId="right" orientation="right" tick={{fontSize: 12}} stroke="#94a3b8" />
-                <Tooltip 
+                <XAxis dataKey="time" tick={{ fontSize: 12 }} stroke="#94a3b8" />
+                <YAxis yAxisId="left" tick={{ fontSize: 12 }} stroke="#94a3b8" />
+                <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12 }} stroke="#94a3b8" />
+                <Tooltip
                   contentStyle={{
-                    borderRadius: '8px', 
-                    border: '1px solid var(--border)', 
+                    borderRadius: '8px',
+                    border: '1px solid var(--border)',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                     backgroundColor: 'var(--card)',
                     color: 'var(--foreground)',
-                  }} 
+                  }}
                   labelStyle={{ color: 'var(--foreground)' }}
                 />
                 <Legend verticalAlign="top" height={40} iconType="circle" wrapperStyle={{ fontSize: '14px', fontWeight: 500 }} />
@@ -267,19 +271,19 @@ export default function StationMonitoring() {
         <div className="bg-white dark:bg-slate-900 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col">
           <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-6">Power Metrics</h3>
           <div className="flex flex-col gap-10 flex-1 justify-center">
-            <Gauge 
-              value={currentData?.voltage} 
-              max={14} 
-              label="Voltage" 
-              color="#eab308" 
-              unit="V" 
+            <Gauge
+              value={currentData?.voltage}
+              max={14}
+              label="Voltage"
+              color="#eab308"
+              unit="V"
             />
-            <Gauge 
-              value={currentData?.current} 
-              max={5} 
-              label="Current" 
-              color="#22c55e" 
-              unit="A" 
+            <Gauge
+              value={currentData?.current}
+              max={5}
+              label="Current"
+              color="#22c55e"
+              unit="A"
             />
           </div>
         </div>
